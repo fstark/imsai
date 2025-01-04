@@ -77,16 +77,16 @@ CR BITS 0  ╡16   1╞ CL
 
 See table 6, page 2-15 for roles
 
-  | F           | E      | D     | C     | B     | A
-- | ----------- | ------ | ----- | ----- | ----- | ---
-7 | Interrupt 7 | Ground | ITTL1 | O1DR  | PE    | SI7
-6 | Interrupt 6 | Ground | ITTL2 | I1DA  | RRDY  | SI6
-5 | Interrupt 5 | Ground | ITTL3 | O2DR  | FE    | SI5
-4 | Interrupt 4 | Ground | CRIS  | I2DA  | TRDY  | SI4
-3 | Interrupt 3 | Ground | REIA1 | PIOS  | /TRDY | SI3
-2 | Interrupt 2 | Ground | REIA2 | PRDY  | /RRDY | SI2
-1 | Interrupt 1 | Ground | REIA3 | CLI   | SIOS  | SI1
-0 | Interrupt 0 | Ground | REIA4 | RDATA | OE    | SI0
+Pin | F           | E      | D     | C     | B     | A
+ -- | ----------- | ------ | ----- | ----- | ----- | ---
+  7 | Interrupt 7 | Ground | ITTL1 | O1DR  | PE    | SI7
+  6 | Interrupt 6 | Ground | ITTL2 | I1DA  | RRDY  | SI6
+  5 | Interrupt 5 | Ground | ITTL3 | O2DR  | FE    | SI5
+  4 | Interrupt 4 | Ground | CRIS  | I2DA  | TRDY  | SI4
+  3 | Interrupt 3 | Ground | REIA1 | PIOS  | /TRDY | SI3
+  2 | Interrupt 2 | Ground | REIA2 | PRDY  | /RRDY | SI2
+  1 | Interrupt 1 | Ground | REIA3 | CLI   | SIOS  | SI1
+  0 | Interrupt 0 | Ground | REIA4 | RDATA | OE    | SI0
 
 Silkscreen does not match schematics, the schematics are true, silk is wrong (see errata)
 

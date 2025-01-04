@@ -23,7 +23,9 @@ Our board has the following configuration:
 * Internal address: IMSAI SIO (3-14, 8-9):
   * CRI=0, PIO=1, SIO=2, CONT=3
 
-One bodge: U7 pin 4 (Receiver Register Disconnect) to SIO connector pin 18
+Two bodges:
+* U7 pin 4 (Receiver Register Disconnect) to SIO connector pin 18
+* 10pF cap between U34 pin 12 and 14 (see errata)
 
 ### U1: DIRECTION JUMPER AREA
 
@@ -86,7 +88,7 @@ See table 6, page 2-15 for roles
 1 | Interrupt 1 | Ground | REIA3 | CLI   | SIOS  | SI1
 0 | Interrupt 0 | Ground | REIA4 | RDATA | OE    | SI0
 
-Silkscreen and schematics contradict each other for C7 / C6 / C5 / C4?
+Silkscreen does not match schematics, the schematics are true, silk is wrong (see errata)
 
 ### UART CONFIGURATION JUMPER AREA (T7)
 

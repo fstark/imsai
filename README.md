@@ -2,6 +2,13 @@
 
 Information and documentation relative to the IMSAI-8080
 
+# Documentation of MIO board
+
+[MIO board section](MIO)
+
+# Test ROMS
+
+[Test roms section][ROMs]
 
 # External links
 

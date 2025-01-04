@@ -8,7 +8,7 @@ Information and documentation relative to the IMSAI-8080
 
 # Test ROMS
 
-[Test roms section][ROMs]
+[Test roms section](ROMs)
 
 # External links
 

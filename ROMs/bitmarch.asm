@@ -1,4 +1,5 @@
 
+		ORG 0C000H
 
 BITMARCH:
 		MVI A,0FEH  ; Load initial display value (inverted)
@@ -18,3 +19,8 @@ LOOP1:
 		JNZ LOOP2   ; Loop until zero
 		MOV A,B     ; Restore the display value
 		JMP LOOP    ; Loop forever
+
+		ORG 0C3C3H
+		JMP BITMARCH
+
+		END

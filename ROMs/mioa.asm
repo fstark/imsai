@@ -6,6 +6,8 @@
 ; SIO1 is C000H
 ; SIO2 is C003H
 ; SIO3 is C006H
+; Other change from IMSAI version is that the delay when
+; changing front panel in SIO1 is 5 seconds instead of 15
 
 ; MIO BOARD CRI INITIALISATION PROGRAM
 ; ADDRESS DEFINITIONS FOR MIO BOARD

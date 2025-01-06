@@ -1,5 +1,5 @@
 
-		ORG 0C000H
+		ORG 0000H
 
 BITMARCH:
 		MVI A,0FEH  ; Load initial display value (inverted)
@@ -7,7 +7,8 @@ LOOP:
 		OUT 0FFH    ; Display it
 		RLC         ; Rotate the bit left 1 position
 		MOV B,A     ; Save it
-		IN  0FFH    ; Read the switches for the delay
+		; IN  0FFH    ; Read the switches for the delay
+		MVI A,03CH
 		INR A       ; Make sure it's greater than zero
 		MOV D,A     ; Load it into outer loop counter
 LOOP2:

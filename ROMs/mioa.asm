@@ -2,7 +2,6 @@
 ; Copied from MIO Rev 2 IMSAI manual
 ; Only SIO test are implemented, no PIO or CRI tests
 ; This is destined to be assembled in ROM @ 0C000H
-; Alt entry point for SIO1 : 0C3C3H for the lazy ones
 ; SIO1 is C000H
 ; SIO2 is C003H
 ; SIO3 is C006H
@@ -17,24 +16,322 @@ PIO 	EQU 41H
 CNT 	EQU 43H
 CRI 	EQU 40H
 SSPT 	EQU 0FFH 		;SENSE LIGHTS AND SWITCHES
-BASA 	EQU 0C000H
-BASB 	EQU 3000H
-BUFR 	EQU 3600H
-STACK 	EQU 3600H
+BASA 	EQU 0000H
+; BASB 	EQU 3000H
+; BUFR 	EQU 3600H
+STACK 	EQU 0C00H
+SSAV: 	EQU 0800H
 
 	ORG BASA
+
+
+
 ;JUMP TABLE FOR ENTRY TO MIO TESTS
-		JMP SIO1
-		JMP SIO2
-		JMP SIO3
-		JMP BITMARCH
+		; JMP SS1
+		; JMP SIO2
+
+		; JMP SIO1
+		; JMP SIO2
+		; JMP SIO3
+		; JMP BITMARCH
 		; JMP PIO1
 		; JMP PIO2
 		; JMP PIO3
 		; JMP CRIWT
 		; JMP CRIRT
 
-		ORG 0C3C3H
+START:
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+		NOP
+
+		JMP START
+
+
+EMITA:	LXI SP,STACK
+		XRA A 			;SET UP CONTROL REG
+		OUT CNT
+EMITA1:
+		MVI A,41H
+		CALL SOUT 		;OUTPUT CHAR
+		JMP EMITA1
+
+
+		; ORG 38H
+EMITB1:
+		MVI A,42H
+		CALL SOUT 		;OUTPUT CHAR
+		JMP EMITB1
+
+		; ORG 100H
 
 ;SIO TEST 1			OUTPUT THE VALUE CONTAINED IN THE
 ; 					SENSE SWITCRES TO THE SIO PORT. IF AN
@@ -46,7 +343,9 @@ STACK 	EQU 3600H
 SIO1:	LXI SP,STACK
 		XRA A 			;SET UP CONTROL REG
 		OUT CNT
-SIO11:	CALL SSIN 		;GET SENSE SWITCHES
+SIO11:	
+		; CALL SSIN 		;GET SENSE SWITCHES
+		MVI A,41H
 		CALL SOUT 		;OUTPUT CHAR
 		CALL SINP 		;TEST INPUT
 		JZ SIO1 		;IF NO INPUT READY
@@ -182,7 +481,6 @@ SSIN:	IN SSPT 		;GET THEM
 		IN SSPT 		;GET NEW VALUE
 		STA SSAV
 		RET
-SSAV: 	DB 0
 ;DELAY 5 SECONDS. - REQUIRES 10 MILLION CYCLES (APPROXIMATELY)
 DLA5: 	MVI A,0
 		MVI C,201
@@ -225,5 +523,69 @@ LOOP1:
 		MOV A,B     ; Restore the display value
 		JMP LOOP    ; Loop forever
 
+; #### TODO
+RAMTEST:
+		LXI SP,STACK
+		XRA A 			;SET UP CONTROL REG
+		OUT CNT
+		MVI A,48H
+		CALL SOUT
+		RET
+
+
+SS1:
+; TEST PROGRAM FOR THE 2651 UART
+
+; SETS UP THE UART FOR 9600 BAUD (INTERNALLY GEN)
+;  8 BIT CHARACTERS, 2 STOP BITS, NO PARITY, RTS
+;    LOW, DTR LOW, AND THEN ECHOES CHARACTERS
+
+	; assumes System Support 1 is addressed
+	; to 50 hex (CompuPro Standard)
+	; for different addresses, change "BASE" in equates
+
+BASE	EQU 050H		; base address of System Support 1
+DATA	EQU BASE+0CH	; UART data register
+STATUS	EQU BASE+0DH	; UART status register
+MODE	EQU BASE+0EH	; UART mode register
+CMND	EQU BASE+0FH	; UART command register
+TBE	EQU 01H		; transmitter buffer empty status bit
+RDA	EQU 02H		; receiver data available status bit
+
+; STACK	EQU 0800H
+
+	DI
+	LXI SP,STACK	; Stack in RAM
+
+INIT:	MVI A,11101110B	; data for mode register 1
+	OUT MODE	; send it
+	MVI A,01111110B	; data for mode register 2
+	OUT MODE	; send it
+	; MVI A,00100111B	; data for command register
+	MVI A,00100111B	; data for command register
+	OUT CMND	; send it
+
+SS1LOOP:
+; GETCHR:	IN STATUS	; read the status register
+; 	ANI RDA		; mask out all bits but RDA
+; 	JZ GETCHR	; if it's not high, loop
+; 	IN DATA		; must be high so read the data
+; 	ANI 7FH		; strip off parity bit
+; 			; otherwise....
+	PUSH PSW	; save the character on the stack
+
+	LDA SSAV
+	INR A
+	STA SSAV
+	OUT SSPT
+
+SNDCHR:
+	IN STATUS	; read the status register
+	ANI TBE		; mask out all bits but TBE
+	JZ SNDCHR	; if it's not high, loop
+	POP PSW		; must be high, get character back
+	MVI A,41H
+	OUT DATA	; and send it
+	JMP SS1LOOP	; then repeat the whole thing
 
 		END

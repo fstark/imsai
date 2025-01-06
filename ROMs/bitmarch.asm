@@ -1,3 +1,5 @@
+; Standard bitmarch
+; Assembled to 0x0000
 
 		ORG 0H
 

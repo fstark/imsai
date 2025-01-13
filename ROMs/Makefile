@@ -3,6 +3,7 @@ HEX_FILES := $(ASM_FILES:.asm=.hex)
 BIN_FILES := $(ASM_FILES:.asm=.bin)
 
 OBJCOPY=/usr/local/Cellar/binutils/2.43.1/bin/objcopy
+OBJCOPY=objcopy
 
 all: $(BIN_FILES)
 

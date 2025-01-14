@@ -1,13 +1,33 @@
 import socket
 from time import sleep
 
+def send_byte( client_socket, byte, delay=1):
+    print( f"Sending byte: {byte:#02x}" )
+    client_socket.sendall( bytes([byte]) )
+    sleep( delay )
+
+def send_boot( client_socket ):
+    send_byte( client_socket, 0x23, 1 )
+    sleep( 2 ) # Size
+    send_byte( client_socket, 0x03, 1 )
+    send_byte( client_socket, 0x00, 1 )
+    sleep( 2 ) # Adrs
+    send_byte( client_socket, 0x00, 1 )
+    send_byte( client_socket, 0x08, 1 )
+    sleep( 2 ) # Data
+    send_byte( client_socket, 0xc3, 1 )
+    send_byte( client_socket, 0x00, 1 )
+    send_byte( client_socket, 0xa0, 1 )
+
+    sleep( 10 )
+    while True:
+        client_socket.sendall( bytes([0x00]) )
+
 # Send data to the client, very slowly
 def send_data( client_socket, data ):
     # Send data byte per byte
     for b in data:
-        print( f"Sending byte: {b:#02x}" )
-        client_socket.sendall( bytes([b]) )
-        sleep( 1 )
+        send_byte( client_socket, bytes([b]), 1 )
 
 def start_server():
     host = '0.0.0.0'
@@ -38,7 +58,8 @@ def start_server():
                         print( f"Received command: {data.strip()}" )
                         sleep( 1 )
                         print( f"Sendind BOOT file" )
-                        send_data( client_socket, b"#\x01\x00\xc3\x00\xa0")
+                        # send_data( client_socket, b"#\x01\x00\xc3\x00\xa0")
+                        send_boot( client_socket )
                         print( f"BOOT file sent" )
                         break
                     else:

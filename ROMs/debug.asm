@@ -6,7 +6,8 @@ STACK 	EQU 00C00H
 DATA 	EQU 00800H
 SWITCHES EQU DATA+0
 
-PROGRAM EQU 00A00H ; The progam load zone
+; PROGRAM EQU 00A00H ; The progam load zone
+; PROGRAM EQU 00800H ; The progam load zone
 
 ; ---------------------------------------------------------------------------
 ; IMSAI HARDWARE DEFS
@@ -298,21 +299,26 @@ LOOP5:	CALL S1INP
 		CPI '#'
 		JNZ LOOP5
 
-		MVI A,13
-		CALL S2OUT
+		CALL S2CRLF
 
 		; Load data size in DE (#### SHOULD BE BC)
 		CALL S1INP
-		MOV E,A
-		CALL S2DBGA
-		CALL S1INP
 		MOV D,A
 		CALL S2DBGA
+		CALL S1INP
+		MOV E,A
+		CALL S2DBGA
 
-		MVI A,13
-		CALL S2OUT
+		CALL S2CRLF
 
 		JMP READPROG
+
+S2CRLF:			; CRLF on serial 2
+		MVI A,13
+		CALL S2OUT
+		MVI A,10
+		JMP S2OUT
+
 
 		ORG 0580H
 
@@ -379,7 +385,18 @@ S2OH1:	ADI 30H
 		JMP S2OUT
 
 READPROG:
-		LXI H,PROGRAM
+		; Load program address in HL
+		CALL S1INP
+		MOV L,A
+		CALL S2DBGA
+		CALL S1INP
+		MOV H,A
+		CALL S2DBGA
+
+		CALL S2CRLF
+
+		PUSH H
+
 NEXT:
 		CALL S1INP
 		CALL S2DBGA
@@ -391,7 +408,11 @@ NEXT:
 		MVI A,'*'
 		CALL S2OUT
 
-		JMP PROGRAM
+		CALL S2CRLF
+		; CALL S2CRLF
+
+		POP H
+		PCHL
 
 
 

@@ -1,5 +1,5 @@
 
-		ORG 0000H
+		ORG 0C000H
 
 BITMARCH:
 		MVI A,0FEH  ; Load initial display value (inverted)

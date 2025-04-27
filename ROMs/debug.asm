@@ -1,7 +1,7 @@
 ; ---------------------------------------------------------------------------
 ; Code layout
 ; ---------------------------------------------------------------------------
-START   EQU 00000H
+START   EQU 0C000H
 STACK 	EQU 00C00H
 DATA 	EQU 00800H
 SWITCHES EQU DATA+0
@@ -64,6 +64,7 @@ SS1_TBE	EQU 01H		; transmitter buffer empty status bit
 
 DISPATCH:
 		IN SSPT			; READ SWITCHES
+		ORI 0C0H
 		MOV H,A			; High address
 		MVI L,00		; Low = 0
 		PCHL			; Jump to address in HL
@@ -86,8 +87,8 @@ CHK:
 ; In case of RST 7 opcode 0FFH (unmapped memory), we loop with serial spam
 ; ---------------------------------------------------------------------------
 
-		ORG 038H
-ARGH:	JMP ARGH
+		; ORG 038H
+; ARGH:	JMP ARGH
 		; MVI A,'X'
 		; ; OUT SS1_DATA
 		; OUT MIO_SIO
@@ -148,7 +149,7 @@ SIN1: 	MVI A,80H 		;GET ERROR BITS
 ; Output 'A' on MIO_SIO in a loop
 ; ---------------------------------------------------------------------------
 
-		ORG 0100H
+		ORG 0C100H
 
 		CALL S1INIT
 EMITA1:
@@ -187,7 +188,7 @@ SOUTL1: IN MIO_CNT
 ; Read from MIO_SIO, Write to MIO_SIO
 ; ---------------------------------------------------------------------------
 
-		ORG 0200H
+		ORG 0C200H
 
 		CALL S1INIT
 LOOP2:
@@ -233,7 +234,7 @@ SOUTL2:
 ; Output 'A' on SSIO
 ; ---------------------------------------------------------------------------
 
-		ORG 0300H
+		ORG 0C300H
 		CALL S2INIT
 
 		MVI A,'X'
@@ -258,7 +259,7 @@ EMITC1:
 ; Read from MIO_SIO, Write to SSIO
 ; ---------------------------------------------------------------------------
 
-		ORG 0400H
+		ORG 0C400H
 
 		CALL S1INIT
 		CALL S2INIT
@@ -281,7 +282,7 @@ LOOP4:
 ; Simple netboot over wifi modem
 ; ---------------------------------------------------------------------------
 
-		ORG 0500H
+		ORG 0C500H
 
 		CALL S1INIT
 		CALL S2INIT
@@ -358,7 +359,7 @@ S2DBGA:
 		POP PSW
 		RET
 
-		ORG 0600H
+		ORG 0C600H
 
 ; ---------------------------------------------------------------------------
 ; Outputs A in hex on the serial port #2

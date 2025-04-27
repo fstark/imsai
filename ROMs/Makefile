@@ -16,4 +16,12 @@ all: $(BIN_FILES)
 	cat $*.2k.bin $*.2k.bin > $@
 
 clean:
-	rm -f $(BIN_FILES) $(HEX_FILES) *.lst *.2k.bin
+	rm -f $(BIN_FILES) $(HEX_FILES) *.lst *.2k.bin *.ihex
+
+
+# Burn on a 2816
+burn: bitmarch2.bin
+	minipro -p AM28C16A@DIP24 -w bitmarch2.2k.bin
+
+
+# minipro -p AM28C16A@DIP24 -r /tmp/toto ; xxd /tmp/toto | less

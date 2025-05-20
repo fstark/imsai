@@ -1,13 +1,29 @@
 ; BOOT IMSAI USING SERIAL PORT
 
 ; ---------------------------------------------------------------------------
+; Writes Rnn\n on the serial port
+; This asks the host to send the the file 'nn' on the port
+; nn is the hex corresponding to the front panel switches
+; The file is transferred in Intel HEX format
+; and loaded where appropriate
+; The start address is determined by the start of the first record
+; Example:
+; bitmarch, loaded at 0000H
+; :1A0000003EFED3FF0747DBFF3E3C3C571EFF1DC20E0015C20C0078C3020079
+; :00001A01E5
+; After receiving each line, we ack with a '+'
+; If we fail, we ask for a retry of the current record with a '-'
+; The hex record is extended with two new records types:
+; FE: sets the stack for the loader (default 0C00H)
+; FF: sets the start of the loaded program
+; ---------------------------------------------------------------------------
+
+; ---------------------------------------------------------------------------
 ; Code layout
 ; ---------------------------------------------------------------------------
 START   EQU 0C000H
 TEST	EQU 0C3C3H
 STACK 	EQU 0C00H
-
-
 
 ; ---------------------------------------------------------------------------
 ; Hardware definitions for MIO card (serial only)
@@ -17,6 +33,7 @@ MIO_CNT 	EQU 43H         ; Control
 
 SSPT	EQU 0FFH 		;SENSE LIGHTS AND SWITCHES
 
+; ---------------------------------------------------------------------------
 		ORG START
 		JMP TEST
 
@@ -34,11 +51,15 @@ LOOP1:
 		JMP LOOP1
 
 LOOP:
+		; Sends 'Rnn\n'
+		MVI A,'R'
+		CALL SOUT
 		CALL SWITCHES
 		CALL SOUTHEX
 		MVI A,13
 		CALL SOUT
-		JMP LOOP
+		LXI D,0FFFH
+		JMP HEXPARSE
 
 ; ---------------------------------------------------------------------------
 ; Inits serial port #1
@@ -162,7 +183,7 @@ S1GETHEX4:
 	RET
 
 ; ---------------------------------------------------------------------------
-; Read and execute an HEX record from the serial port
+; Read and execute HEX file from the serial port
 ; ---------------------------------------------------------------------------
 HEXPARSE:
 	; Read ':'
@@ -170,32 +191,66 @@ HEXPARSE:
 	CPI ':'
 	JNZ	 HEXPARSE
 
+	; checksum
+	MVI C,0
+
 	; Read the length
 	CALL S1GETHEX2
 	MOV B,A
 
-	; Read the address
+		; Read the address
 	CALL S1GETHEX4
-	; -- first time, store in DE for future use
+		; Check if start address already set
+	MOV A,D
+	ANA E
+	CPI 0FFH
+	JNZ CONT0001	; DE != 0FFFFH
 
+		; Load new start address
+	MOV D,H
+	MOV E,L
+
+CONT0001:
 	; Read the type
 	CALL S1GETHEX2
 
 	; Type 01: end of record
 	CPI 01H
-	RZ
+	JNZ CONT0002
 
+	MOV H,D
+	MOV L,E
+	PCHL
+
+CONT0002:
 	; Type 00: data record
 	CPI 00H
 	JNZ ERROR
 
-	RET
+LOOP2:
+	MOV B,A
+	CPI 0
+	JZ CHECKSUM
+	CALL S1GETHEX2
+	MOV M,A
+	INX H
+	ADD C
+	MOV C,A
+	DCR B
+	JMP LOOP2
+
+CHECKSUM:
+	CALL S1GETHEX2
+	ADD C
+	CPI 0
+	JNZ ERROR
+
+	JMP HEXPARSE
 
 ERROR:
-	RET
-
-HEXDATA:
-
+	MVI A,'-'
+	CALL SOUT
+	JMP HEXPARSE
 
 ; ---------------------------------------------------------------------------
 ; Outputs a string pointed by (HL)

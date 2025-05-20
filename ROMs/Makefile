@@ -20,8 +20,10 @@ clean:
 
 
 # Burn on a 2816
-burn: bitmarch2.bin
-	minipro -p AM28C16A@DIP24 -w bitmarch2.2k.bin
+TEST=serialboot
+
+burn: ${TEST}.bin
+	minipro -p AM28C16A@DIP24 -w ${TEST}.2k.bin
 
 
 # minipro -p AM28C16A@DIP24 -r /tmp/toto ; xxd /tmp/toto | less

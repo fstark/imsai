@@ -18,11 +18,16 @@ MIO_CNT 	EQU 43H         ; Control
 		XRA A 			; SET UP CONTROL REG
 		OUT MIO_CNT
 
+						; Outputs 0-7F in a loop
+		MVI B,0
+
 SOUTL1: IN MIO_CNT
 		ANI 1
 		JZ SOUTL1
 
-		MVI A,'A'
+		MOV A,B
+		ANI 7FH
+		INR B
 		OUT MIO_SIO 		;CHAR OUT
 		JMP	SOUTL1
 

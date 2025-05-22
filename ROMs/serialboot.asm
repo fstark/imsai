@@ -22,7 +22,6 @@
 ; Code layout
 ; ---------------------------------------------------------------------------
 START   EQU 0C000H
-TEST	EQU 0C3C3H
 STACK 	EQU 0C00H
 
 ; ---------------------------------------------------------------------------
@@ -31,23 +30,25 @@ STACK 	EQU 0C00H
 MIO_SIO 	EQU 42H         ; Serial I/O
 MIO_CNT 	EQU 43H         ; Control
 
-SSPT	EQU 0FFH 		;SENSE LIGHTS AND SWITCHES
+SSPT	EQU 0FFH 			;SENSE LIGHTS AND SWITCHES
+
+
+CINIT	EQU 0C00H
+COUT	EQU 0C03H
+CIN		EQU 0C06H
 
 ; ---------------------------------------------------------------------------
 		ORG START
-		JMP TEST
-
-HELLO:	DB "HELLO, WORLD",0
-
-		ORG TEST
 		DI
 		LXI SP,STACK
-		CALL SINIT
+		; CALL SINIT
+		LXI H,SERIAL1
+		CALL SETCONSOLE
 
 		JMP HEXPARSE
 
 LOOP1:
-		; CALL S1INP
+		; CALL CIN
 		CALL S1GETHEX2
 		CALL SOUTHEX
 		JMP LOOP1
@@ -55,27 +56,70 @@ LOOP1:
 LOOP:
 		; Sends 'Rnn\n'
 		MVI A,'R'
-		CALL SOUT
+		CALL COUT
 		CALL SWITCHES
 		CALL SOUTHEX
 		MVI A,13
-		CALL SOUT
+		CALL COUT
 		LXI D,0FFFH
 		JMP HEXPARSE
 
 ; ---------------------------------------------------------------------------
-; Inits serial port #1
+; Sets the console to the driver pointer by HL
+; Inits the console
 ; ---------------------------------------------------------------------------
-SINIT:
+SETCONSOLE:
+	MVI A,0C3H
+	STA CINIT
+	STA COUT
+	STA CIN
+
+	MOV A,M
+	INX H
+	STA CINIT+1
+	MOV A,M
+	INX H
+	STA CINIT+2
+
+	MOV A,M
+	INX H
+	STA COUT+1
+	MOV A,M
+	INX H
+	STA COUT+1
+
+	MOV A,M
+	INX H
+	STA CIN+1
+	MOV A,M
+	INX H
+	STA CIN+1
+
+	JMP CINIT
+
+; ---------------------------------------------------------------------------
+; The serial port from the MIO card
+; ---------------------------------------------------------------------------
+
+SERIAL1:
+	DW MIO_SINIT
+	DW MIO_SOUT
+	DW MIO_SIN
+
+; ---------------------------------------------------------------------------
+; INIT
+; ---------------------------------------------------------------------------
+MIO_SINIT:
 	XRA A 			; SET UP CONTROL REG
 	OUT MIO_CNT
+
 	RET
 
 ; ---------------------------------------------------------------------------
-; Outputs a character on the serial port #1
+; OUTPUT
 ; ---------------------------------------------------------------------------
 
-SOUT:
+MIO_SOUT:
 	PUSH PSW
 L0000:
 	IN MIO_CNT			; WAIT FOR TRANSMIT READY
@@ -87,22 +131,26 @@ L0000:
 	OUT MIO_SIO 		;CHAR OUT
 	RET
 
-
+; ---------------------------------------------------------------------------
+; INPUT
+; ---------------------------------------------------------------------------
 
 ;INPUT A CHAR WHEN READY. IF AN ERROR
 ;OCCURS, PUT PE,CE,FE,RRDY,TROY IN 4 TO 0
-S1INP: 	IN MIO_CNT 			;SEE IF READY ON ERROR
+MIO_SIN:
+		IN MIO_CNT 			;SEE IF READY ON ERROR
 		ANI 0AH
-		JZ S1INP
+		JZ MIO_SIN
 		; RZ
 		XRI 0AH 		;YES, TEST ERROR
-		JZ SIN1
+		JZ MIO_SIN1
 		XRI 2 			;SEE IF OLD ERROR PLAG
-		JZ S1INP
+		JZ MIO_SIN
 		; RZ 				; IF SO, RETURN
 		IN MIO_SIO 			;NO ERROR, GET CHAR
 		RET
-SIN1: 	MVI A,80H 		;GET ERROR BITS
+MIO_SIN1:
+		MVI A,80H 		;GET ERROR BITS
 		OUT MIO_CNT 		;PARITY ERROR
 		IN MIO_CNT
 		ANI 3
@@ -132,12 +180,15 @@ SIN1: 	MVI A,80H 		;GET ERROR BITS
 
 
 
+
+
+
 ; ---------------------------------------------------------------------------
-; Read a hex digit from the serial port
+; Read a hex digit from STDIN
 ; ---------------------------------------------------------------------------
 S1GETHEX1:
 	; Read a character
-	CALL S1INP
+	CALL CIN
 
 	; Convert to hex
 	CPI '0'
@@ -158,22 +209,28 @@ CONT0000:
 
 ; ---------------------------------------------------------------------------
 ; Reads two hex digits from the serial port
+; Update C with the checksum
 ; ---------------------------------------------------------------------------
 S1GETHEX2:
 	PUSH B
-	CALL S1GETHEX1
+	CALL S1GETHEX1	; Get first digit
 	RAL
 	RAL
 	RAL
 	RAL
+	MOV B,A			; *16
+	CALL S1GETHEX1	; Get second digit
+	ORA B			; Mix with first digit
 	MOV B,A
-	CALL S1GETHEX1
-	ORA B
+	ADC C			; Update checksum
+	MOV C,A			; Store checksum
+	MOV B,A
 	POP B
 	RET
 
 ; ---------------------------------------------------------------------------
 ; Reads four hex digits from the serial port into HL
+; Update C with the checksum
 ; ---------------------------------------------------------------------------
 S1GETHEX4:
 	PUSH PSW
@@ -189,15 +246,15 @@ S1GETHEX4:
 ; ---------------------------------------------------------------------------
 HEXPARSE:
 	; Read ':'
-	CALL S1INP
+	CALL CIN
 	CPI ':'
 	JNZ	 HEXPARSE
 
 	; DEBUG
 	MVI A,':'
-	CALL SOUT
+	CALL COUT
 
-	; checksum
+	; Checksum starts at 0
 	MVI C,0
 
 	; Read the length
@@ -220,10 +277,11 @@ CONT0001:
 	; Read the type
 	CALL S1GETHEX2
 
-	; Type 01: end of record
+	; Type 01: end record
 	CPI 01H
 	JNZ CONT0002
 
+; Type 01: END RECORD, START
 	MOV H,D
 	MOV L,E
 	PCHL
@@ -233,10 +291,11 @@ CONT0002:
 	CPI 00H
 	JNZ ERROR
 
+; Type 00: DATA RECORD
 LOOP2:
 	MOV A,B
 	CPI 0
-	JZ CHECKSUM
+	JZ DATAREAD
 	CALL S1GETHEX2
 	MOV M,A
 	INX H
@@ -245,19 +304,19 @@ LOOP2:
 	DCR B
 	JMP LOOP2
 
-CHECKSUM:
-	CALL S1GETHEX2
-	ADD C
+DATAREAD:
+	CALL S1GETHEX2	; Last checksum byte
+	MOV A,C
 	CPI 0
-	; JNZ ERROR
+	JNZ ERROR
 
 	MVI A,'+'
-	CALL SOUT
+	CALL COUT
 	JMP HEXPARSE
 
 ERROR:
 	MVI A,'-'
-	CALL SOUT
+	CALL COUT
 	JMP HEXPARSE
 
 ; ---------------------------------------------------------------------------
@@ -267,7 +326,7 @@ SOUTSTR:
 		MOV A,M
 		CPI 0
 		RZ
-		CALL SOUT
+		CALL COUT
 		INX H
 		JMP SOUTSTR
 
@@ -278,11 +337,11 @@ S2DBGA:
 		PUSH PSW
 		PUSH PSW
 		MVI A,'['
-		CALL SOUT
+		CALL COUT
 		POP PSW
 		CALL SOUTHEX
 		MVI A,']'
-		CALL SOUT
+		CALL COUT
 		POP PSW
 		RET
 
@@ -303,7 +362,7 @@ SOUTHEX1:				; OUTPUT LOW NIBBLE OF A IN HEX
 		JC SOH1
 		ADI 7
 SOH1:	ADI 30H
-		JMP SOUT
+		JMP COUT
 
 ; ---------------------------------------------------------------------------
 ; Read the front panel switches
@@ -314,33 +373,3 @@ SWITCHES:
 
 
 		END
-; READPROG:
-; 		; Load program address in HL
-; 		CALL S1INP
-; 		MOV L,A
-; 		CALL S2DBGA
-; 		CALL S1INP
-; 		MOV H,A
-; 		CALL S2DBGA
-
-; 		CALL S2CRLF
-
-; 		PUSH H
-
-; NEXT:
-; 		CALL S1INP
-; 		CALL S2DBGA
-; 		MOV M,A
-; 		INR H
-; 		DCR D
-; 		JNZ NEXT
-
-; 		MVI A,'*'
-; 		CALL S2OUT
-
-; 		CALL S2CRLF
-; 		; CALL S2CRLF
-
-; 		POP H
-; 		PCHL
-

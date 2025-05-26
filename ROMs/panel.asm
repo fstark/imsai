@@ -1,5 +1,5 @@
 ; A simple program that reads the switches and displays the value on the LEDs
-	ORG 0H
+	ORG 01200H
 
 START:
 		IN 0FFH

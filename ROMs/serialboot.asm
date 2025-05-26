@@ -21,8 +21,8 @@
 ; ---------------------------------------------------------------------------
 ; Code layout
 ; ---------------------------------------------------------------------------
-START   EQU 0C000H
-STACK 	EQU 0C00H
+START   EQU 00000H
+STACK 	EQU 01100H
 
 ; ---------------------------------------------------------------------------
 ; Hardware definitions for MIO card (serial only)
@@ -33,9 +33,10 @@ MIO_CNT 	EQU 43H         ; Control
 SSPT	EQU 0FFH 			;SENSE LIGHTS AND SWITCHES
 
 
-CINIT	EQU 0C00H
-COUT	EQU 0C03H
-CIN		EQU 0C06H
+CINIT	EQU 01000H
+COUT	EQU 01003H
+CIN		EQU 01006H
+CHECKSUM EQU 01009H
 
 ; ---------------------------------------------------------------------------
 		ORG START
@@ -45,6 +46,10 @@ CIN		EQU 0C06H
 		LXI H,SERIAL1
 		CALL SETCONSOLE
 
+		MVI A,'A'
+		CALL COUT
+
+		LXI D,0FFFFH
 		JMP HEXPARSE
 
 LOOP1:
@@ -63,6 +68,11 @@ LOOP:
 		CALL COUT
 		LXI D,0FFFH
 		JMP HEXPARSE
+
+
+	ORG 038H
+      JMP 038H
+
 
 ; ---------------------------------------------------------------------------
 ; Sets the console to the driver pointer by HL
@@ -86,14 +96,14 @@ SETCONSOLE:
 	STA COUT+1
 	MOV A,M
 	INX H
-	STA COUT+1
+	STA COUT+2
 
 	MOV A,M
 	INX H
 	STA CIN+1
 	MOV A,M
 	INX H
-	STA CIN+1
+	STA CIN+2
 
 	JMP CINIT
 
@@ -196,6 +206,7 @@ S1GETHEX1:
 	CPI '9' + 1
 	JNC CONT0000  ; <'9' => convert to hex
 	SUI '0'
+
 	RET
 
 CONT0000:
@@ -222,10 +233,18 @@ S1GETHEX2:
 	CALL S1GETHEX1	; Get second digit
 	ORA B			; Mix with first digit
 	MOV B,A
-	ADC C			; Update checksum
-	MOV C,A			; Store checksum
-	MOV B,A
+	LDA CHECKSUM	; Update checksum
+	ADD B
+	STA CHECKSUM	; Store checksum
+	MOV A,B
 	POP B
+
+	PUSH PSW
+	CALL S2DBGA
+	LDA CHECKSUM
+	CALL S2DBGA
+	POP PSW
+
 	RET
 
 ; ---------------------------------------------------------------------------
@@ -255,7 +274,8 @@ HEXPARSE:
 	CALL COUT
 
 	; Checksum starts at 0
-	MVI C,0
+	MVI A,0
+	STA CHECKSUM
 
 	; Read the length
 	CALL S1GETHEX2
@@ -284,6 +304,12 @@ CONT0001:
 ; Type 01: END RECORD, START
 	MOV H,D
 	MOV L,E
+
+	MOV A,D
+	CALL S2DBGA
+	MOV A,E
+	CALL S2DBGA
+
 	PCHL
 
 CONT0002:
@@ -299,14 +325,12 @@ LOOP2:
 	CALL S1GETHEX2
 	MOV M,A
 	INX H
-	ADD C
-	MOV C,A
 	DCR B
 	JMP LOOP2
 
 DATAREAD:
 	CALL S1GETHEX2	; Last checksum byte
-	MOV A,C
+	LDA CHECKSUM
 	CPI 0
 	JNZ ERROR
 
@@ -335,10 +359,10 @@ SOUTSTR:
 ; ---------------------------------------------------------------------------
 S2DBGA:
 		PUSH PSW
-		PUSH PSW
 		MVI A,'['
 		CALL COUT
 		POP PSW
+		PUSH PSW
 		CALL SOUTHEX
 		MVI A,']'
 		CALL COUT

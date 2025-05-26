@@ -1,0 +1,19 @@
+	INCL "rom.inc"
+
+	ORG MEMSTART
+
+	CALL COUTSTRINLINE
+	DB 'Hello, world!', 10, 0
+
+	CALL COUTSTRINLINE
+	DB 'Ready to rock!!!', 10, 0
+
+	JMP 0
+
+COUTSTRINLINE:
+	POP H
+	CALL COUTSTR
+	INX H
+	PCHL
+
+	END

@@ -22,7 +22,6 @@
 ; Code layout
 ; ---------------------------------------------------------------------------
 START   EQU 00000H
-STACK 	EQU 01100H
 
 ; ---------------------------------------------------------------------------
 ; Hardware definitions for MIO card (serial only)
@@ -32,31 +31,31 @@ MIO_CNT 	EQU 43H         ; Control
 
 SSPT	EQU 0FFH 			;SENSE LIGHTS AND SWITCHES
 
+	INCL "rom.inc"
 
-CHECKSUM EQU 01009H
-
-; ---------------------------------------------------------------------------
-; Hooks definitions
-; ---------------------------------------------------------------------------
-
-HOOKS   	EQU 01000H
-CINITHOOK 	EQU 0
-COUTHOOK 	EQU 1
-CINHOOK 	EQU 2
-HOOKS_SIZE	EQU 3
-
-CINIT		EQU HOOKS+CINITHOOK*3
-COUT		EQU HOOKS+COUTHOOK*3
-CIN			EQU HOOKS+CINHOOK*3
+STACK 	EQU MEMSTART+100H
+CHECKSUM EQU VARSTART+10H
 
 ; ---------------------------------------------------------------------------
 ; Hooks stack
 ; ---------------------------------------------------------------------------
 
-HOOK_TOP EQU 00CF0H
-HOOK_STACK EQU 00D00H
+HOOK_TOP 	EQU VARSTART+20H
+HOOK_STACK 	EQU VARSTART+40H
 
 ; ---------------------------------------------------------------------------
+
+	ORG 00000H
+	JMP COLDSTART
+
+	ORG 00020H
+	JMP COLDSTART
+
+	ORG 038H
+    JMP 038H
+
+	ORG COUTSTR
+	JMP COUTSTRIMP
 
 INIT_HOOKS:
 	; Initialize the HOOK stack pointer
@@ -130,7 +129,8 @@ HOOK_POP:
 	JMP HOOK_SET
 
 ; ---------------------------------------------------------------------------
-		ORG START
+
+COLDSTART:
 		DI
 		LXI SP,STACK
 		; CALL SINIT
@@ -158,13 +158,8 @@ LOOP:
 		CALL SOUTHEX
 		MVI A,13
 		CALL COUT
-		LXI D,0FFFH
+		LXI D,0FFFFH
 		JMP HEXPARSE
-
-
-	ORG 038H
-      JMP 038H
-
 
 ; ---------------------------------------------------------------------------
 ; Sets the console to the driver pointer by HL
@@ -397,9 +392,12 @@ CONT0001:
 	MOV H,D
 	MOV L,E
 
-	MOV A,D
+	MVI A,'*'
+	CALL COUT
+
+	MOV A,H
 	CALL S2DBGA
-	MOV A,E
+	MOV A,L
 	CALL S2DBGA
 
 	PCHL
@@ -438,13 +436,13 @@ ERROR:
 ; ---------------------------------------------------------------------------
 ; Outputs a string pointed by (HL)
 ; ---------------------------------------------------------------------------
-SOUTSTR:
+COUTSTRIMP:
 		MOV A,M
 		CPI 0
 		RZ
 		CALL COUT
 		INX H
-		JMP SOUTSTR
+		JMP COUTSTRIMP
 
 ; ---------------------------------------------------------------------------
 ; Outputs A for debug
@@ -486,6 +484,5 @@ SOH1:	ADI 30H
 SWITCHES:
 		IN SSPT
 		RET
-
 
 		END

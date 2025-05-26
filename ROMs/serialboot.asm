@@ -33,16 +33,108 @@ MIO_CNT 	EQU 43H         ; Control
 SSPT	EQU 0FFH 			;SENSE LIGHTS AND SWITCHES
 
 
-CINIT	EQU 01000H
-COUT	EQU 01003H
-CIN		EQU 01006H
 CHECKSUM EQU 01009H
+
+; ---------------------------------------------------------------------------
+; Hooks definitions
+; ---------------------------------------------------------------------------
+
+HOOKS   	EQU 01000H
+CINITHOOK 	EQU 0
+COUTHOOK 	EQU 1
+CINHOOK 	EQU 2
+HOOKS_SIZE	EQU 3
+
+CINIT		EQU HOOKS+CINITHOOK*3
+COUT		EQU HOOKS+COUTHOOK*3
+CIN			EQU HOOKS+CINHOOK*3
+
+; ---------------------------------------------------------------------------
+; Hooks stack
+; ---------------------------------------------------------------------------
+
+HOOK_TOP EQU 00CF0H
+HOOK_STACK EQU 00D00H
+
+; ---------------------------------------------------------------------------
+
+INIT_HOOKS:
+	; Initialize the HOOK stack pointer
+	LXI H,HOOK_STACK
+	SHLD HOOK_TOP
+
+	; Store 0xC3 in all hooks
+	MVI B,0C3H
+	MVI A,HOOKS_SIZE
+	LXI H,HOOKS
+	ORA A
+LOOP4:
+	RZ
+	MOV M,B
+	INX H
+	INX H
+	INX H
+	DCR A
+	JMP LOOP4
+
+; IN  A  : Hook #
+; OUT HL : Hook address
+HOOK_GET:
+	LHLD HOOKS
+	INX H		; Skip the JMP
+LOOP3:
+	ORA A
+	RZ
+	DCR A
+	INX H
+	INX H
+	INX H
+	JMP LOOP3
+
+; IN  A  : Hook #
+; IN  DE : Function address
+; WRONG: SHOULD PUSH THE OLD HOOK
+HOOK_PUSH:
+	PUSH H
+	MOV B,A
+	CALL HOOK_GET
+	MOV E,M
+	INX H
+	MOV D,M
+	LHLD HOOK_TOP
+	DCX H
+	MOV M,B
+	DCX H
+	MOV M,D
+	DCX H
+	MOV M,E
+	SHLD HOOK_TOP
+	POP D
+HOOK_SET:
+	CALL HOOK_GET
+	MOV M,E
+	INX H
+	MOV M,D
+	RET
+
+; IN  A  : Hook #
+HOOK_POP:
+	LHLD HOOK_TOP
+	MOV E,M
+	INX H
+	MOV D,M
+	INX H
+	MOV A,M
+	INX H
+	SHLD HOOK_TOP
+	JMP HOOK_SET
 
 ; ---------------------------------------------------------------------------
 		ORG START
 		DI
 		LXI SP,STACK
 		; CALL SINIT
+		CALL INIT_HOOKS
 		LXI H,SERIAL1
 		CALL SETCONSOLE
 

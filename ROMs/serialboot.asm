@@ -23,12 +23,6 @@
 ; ---------------------------------------------------------------------------
 START   EQU 00000H
 
-; ---------------------------------------------------------------------------
-; Hardware definitions for MIO card (serial only)
-; ---------------------------------------------------------------------------
-MIO_SIO 	EQU 42H         ; Serial I/O
-MIO_CNT 	EQU 43H         ; Control
-
 SSPT	EQU 0FFH 			;SENSE LIGHTS AND SWITCHES
 
 	INCL "rom.inc"
@@ -194,91 +188,12 @@ SETCONSOLE:
 
 	JMP CINIT
 
-; ---------------------------------------------------------------------------
-; The serial port from the MIO card
-; ---------------------------------------------------------------------------
 
-SERIAL1:
-	DW MIO_SINIT
-	DW MIO_SOUT
-	DW MIO_SIN
+
 
 ; ---------------------------------------------------------------------------
-; INIT
+; Utilities
 ; ---------------------------------------------------------------------------
-MIO_SINIT:
-	XRA A 			; SET UP CONTROL REG
-	OUT MIO_CNT
-
-	RET
-
-; ---------------------------------------------------------------------------
-; OUTPUT
-; ---------------------------------------------------------------------------
-
-MIO_SOUT:
-	PUSH PSW
-L0000:
-	IN MIO_CNT			; WAIT FOR TRANSMIT READY
-	ANI 01H
-	JZ L0000
-
-	POP PSW
-
-	OUT MIO_SIO 		;CHAR OUT
-	RET
-
-; ---------------------------------------------------------------------------
-; INPUT
-; ---------------------------------------------------------------------------
-
-;INPUT A CHAR WHEN READY. IF AN ERROR
-;OCCURS, PUT PE,CE,FE,RRDY,TROY IN 4 TO 0
-MIO_SIN:
-		IN MIO_CNT 			;SEE IF READY ON ERROR
-		ANI 0AH
-		JZ MIO_SIN
-		; RZ
-		XRI 0AH 		;YES, TEST ERROR
-		JZ MIO_SIN1
-		XRI 2 			;SEE IF OLD ERROR PLAG
-		JZ MIO_SIN
-		; RZ 				; IF SO, RETURN
-		IN MIO_SIO 			;NO ERROR, GET CHAR
-		RET
-MIO_SIN1:
-		MVI A,80H 		;GET ERROR BITS
-		OUT MIO_CNT 		;PARITY ERROR
-		IN MIO_CNT
-		ANI 3
-		RLC
-		MOV B,A
-		MVI A,0C0H 		;FRAMING ERROR
-		OUT MIO_CNT
-		IN MIO_CNT
-		ANI 8
-		RRC
-		ADD B
-		MOV B,A
-		MVI A,40H 		;OVERUN,RRDY AND TRDY
-		OUT MIO_CNT
-		IN MIO_CNT
-		ANI 0BH
-		ADD B
-		MOV B,A
-		IN MIO_SIO 			;CLEAR CHARACTER
-		XRA A 			;RESET CONTROL FOR ERROR FLAG
-		OUT MIO_CNT
-		ORI 80H
-		MOV A,B
-		RET
-
-
-
-
-
-
-
 
 ; ---------------------------------------------------------------------------
 ; Read a hex digit from STDIN
@@ -446,6 +361,7 @@ COUTSTRIMP:
 
 ; ---------------------------------------------------------------------------
 ; Outputs A for debug
+; IN:   A    ; value to display
 ; ---------------------------------------------------------------------------
 S2DBGA:
 		PUSH PSW
@@ -460,7 +376,10 @@ S2DBGA:
 		RET
 
 ; ---------------------------------------------------------------------------
-; Outputs A in hex on the serial port #2
+; Outputs A in hex
+; IN:   A    ; value to output
+; OUT:  none
+; Trashed: A ; A is modified during output
 ; ---------------------------------------------------------------------------
 SOUTHEX:
 		PUSH PSW
@@ -480,9 +399,16 @@ SOH1:	ADI 30H
 
 ; ---------------------------------------------------------------------------
 ; Read the front panel switches
+; OUT:  A    ; switch value returned
 ; ---------------------------------------------------------------------------
 SWITCHES:
 		IN SSPT
 		RET
+
+; ---------------------------------------------------------------------------
+; Drivers
+; ---------------------------------------------------------------------------
+
+		INCL "sio.inc"	; Serial I/O from IMSAI MIO card
 
 		END
